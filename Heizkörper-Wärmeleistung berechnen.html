@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Heizkörper-Wärmeleistung berechnen</title>
+<style>
+:root{
+  --bg:#f4f6f8; --card:#ffffff; --text:#1b2430; --muted:#5b6776; --line:#d9e0e7;
+  --accent:#d9480f; --accent-soft:#fff0e8; --info:#0b5cad; --info-soft:#e8f2fc; --ok:#1a7f37;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12171d; --card:#1c232c; --text:#eaeef2; --muted:#9aa7b5; --line:#2d3743;
+    --accent:#ff8a4c; --accent-soft:#3a2418; --info:#6db3f5; --info-soft:#16283a; --ok:#4cc26b;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12171d; --card:#1c232c; --text:#eaeef2; --muted:#9aa7b5; --line:#2d3743;
+  --accent:#ff8a4c; --accent-soft:#3a2418; --info:#6db3f5; --info-soft:#16283a; --ok:#4cc26b;
+  color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45;font-size:16px}
+main{max-width:560px;margin:0 auto;padding:16px 14px 40px}
+h1{font-size:1.35rem;margin:6px 0 4px}
+.sub{color:var(--muted);margin:0 0 14px;font-size:.95rem}
+.formula{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 10px;margin-bottom:14px;text-align:center}
+.formula .hint{font-size:.8rem;color:var(--muted);margin-top:8px}
+.eq{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;font-size:1.15rem}
+.frac{display:inline-flex;flex-direction:column;align-items:center}
+.frac .num{padding:0 6px 3px;border-bottom:2px solid var(--text)}
+.frac .den{padding:3px 6px 0}
+.tok{border:2px solid var(--accent);background:var(--accent-soft);color:var(--text);border-radius:10px;padding:6px 10px;font:inherit;font-weight:600;cursor:pointer;min-height:44px}
+.tok sub{font-size:.7em}
+.tok:active{transform:scale(.96)}
+.dot{font-weight:700}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:12px;overflow:hidden}
+.card.active{border-color:var(--accent)}
+.head{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;width:100%;background:none;border:0;color:inherit;font:inherit;text-align:left;min-height:56px}
+.badge{flex:none;min-width:44px;height:44px;border-radius:10px;background:var(--accent-soft);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700}
+.badge sub{font-size:.7em}
+.ttl{flex:1}
+.ttl b{display:block}
+.ttl span{font-size:.85rem;color:var(--muted)}
+.i{flex:none;width:30px;height:30px;border-radius:50%;background:var(--info-soft);color:var(--info);display:flex;align-items:center;justify-content:center;font-weight:700;font-family:Georgia,serif}
+.body{display:none;padding:0 14px 14px}
+.card.open .body{display:block}
+.info{background:var(--info-soft);border-left:4px solid var(--info);border-radius:8px;padding:10px 12px;font-size:.92rem;margin-bottom:12px}
+.info p{margin:0 0 6px}.info p:last-child{margin:0}
+.row{display:flex;gap:8px;align-items:center}
+input,select{width:100%;font:inherit;font-size:1.1rem;padding:11px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--text);min-height:48px}
+input:focus,select:focus{outline:none;border-color:var(--accent)}
+.unit{flex:none;color:var(--muted);min-width:34px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{border:1.5px solid var(--line);background:var(--bg);color:var(--text);border-radius:999px;padding:7px 12px;font:inherit;font-size:.85rem;cursor:pointer;min-height:36px}
+.chip:active{background:var(--accent-soft)}
+details{margin-top:12px;border:1px dashed var(--line);border-radius:10px;padding:8px 10px}
+summary{cursor:pointer;font-weight:600;font-size:.92rem;min-height:32px;display:flex;align-items:center}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px}
+.grid3 label{font-size:.78rem;color:var(--muted);display:block;margin-bottom:3px}
+.grid3 input{font-size:1rem;padding:9px 8px}
+.helper-out{margin-top:10px;font-size:.92rem}
+button.use{margin-top:8px;border:0;background:var(--info);color:#fff;border-radius:10px;padding:10px 14px;font:inherit;font-weight:600;cursor:pointer;min-height:44px}
+:root:not([data-theme="light"]) button.use{color:#0b1520}
+.result{background:var(--card);border:2px solid var(--accent);border-radius:16px;padding:16px;margin-top:16px;text-align:center}
+.result .lbl{color:var(--muted);font-size:.9rem}
+.result .val{font-size:2.4rem;font-weight:800;color:var(--accent);line-height:1.1;margin:4px 0}
+.result .calc{font-size:.9rem;color:var(--muted);word-break:break-word}
+.result .cmp{margin-top:10px;font-size:.92rem;text-align:left;background:var(--bg);border-radius:10px;padding:10px 12px}
+.err{color:var(--accent);font-size:.9rem;margin-top:6px}
+.reset{display:block;margin:16px auto 0;background:none;border:1.5px solid var(--line);color:var(--text);border-radius:10px;padding:10px 18px;font:inherit;cursor:pointer;min-height:44px}
+.foot{font-size:.78rem;color:var(--muted);margin-top:16px;text-align:center}
+</style>
+</head>
+<body>
+<main>
+  <h1>Tatsächliche Wärmeleistung eines Heizkörpers</h1>
+  <p class="sub">Tippe auf die orangen Felder, um zu erfahren, was die Größen bedeuten. Trage dann deine Werte ein.</p>
+
+  <section class="formula" aria-label="Formel">
+    <div class="eq">
+      <button class="tok" data-go="card-Q">Q<span class="dot">̇</span></button>
+      <span>=</span>
+      <span class="frac">
+        <span class="num">
+          <button class="tok" data-go="card-q">q̇<sub>N</sub></button>
+          <span>·</span>
+          <button class="tok" data-go="card-z">z</button>
+        </span>
+        <span class="den">
+          <button class="tok" data-go="card-f1">f<sub>1</sub></button>
+          <span>·</span>
+          <button class="tok" data-go="card-f2">f<sub>2</sub></button>
+        </span>
+      </span>
+    </div>
+    <div class="hint">Tippe auf ein Formelzeichen, um zum Feld zu springen.</div>
+  </section>
+
+  <!-- q -->
+  <section class="card" id="card-q">
+    <button class="head" aria-expanded="false">
+      <span class="badge">q̇<sub>N</sub></span>
+      <span class="ttl"><b>Norm-Wärmeleistung je Glied</b><span>Herstellerangabe in Watt pro Glied</span></span>
+      <span class="i">i</span>
+    </button>
+    <div class="body">
+      <div class="info">
+        <p><b>Was ist das?</b> Die Leistung, die ein einzelnes Glied (bzw. ein Meter Baulänge) unter <b>Normbedingungen</b> abgibt: Vorlauf 75 °C, Rücklauf 65 °C, Raum 20 °C (Übertemperatur 50 K).</p>
+        <p><b>Woher?</b> Typenschild, Herstellerkatalog, Datenblatt oder Tabellenbuch. Achte auf Bauhöhe und Bautiefe.</p>
+        <p><b>Achtung:</b> Bei Kompakt-Heizkörpern steht die Normleistung oft für den gesamten Heizkörper. Dann ist z = 1.</p>
+      </div>
+      <div class="row"><input id="q" type="number" inputmode="decimal" min="0" step="any" placeholder="z. B. 120"><span class="unit">W</span></div>
+    </div>
+  </section>
+
+  <!-- z -->
+  <section class="card" id="card-z">
+    <button class="head" aria-expanded="false">
+      <span class="badge">z</span>
+      <span class="ttl"><b>Anzahl der Glieder</b><span>Wie viele Glieder hat der Heizkörper?</span></span>
+      <span class="i">i</span>
+    </button>
+    <div class="body">
+      <div class="info">
+        <p><b>Was ist das?</b> Die Anzahl der Glieder (Rippen) eines Gliederheizkörpers. Die Gesamt-Normleistung ergibt sich aus Leistung je Glied mal Gliederzahl.</p>
+        <p><b>Praxis:</b> Glieder einfach zählen. Bei Platten- oder Kompaktheizkörpern gilt z = 1, wenn q̇<sub>N</sub> schon die Leistung des ganzen Heizkörpers ist.</p>
+      </div>
+      <div class="row"><input id="z" type="number" inputmode="decimal" min="0" step="1" placeholder="z. B. 10"><span class="unit">Stk.</span></div>
+    </div>
+  </section>
+
+  <!-- f1 -->
+  <section class="card" id="card-f1">
+    <button class="head" aria-expanded="false">
+      <span class="badge">f<sub>1</sub></span>
+      <span class="ttl"><b>Umrechnungsfaktor Temperatur</b><span>Betriebstemperaturen statt Norm</span></span>
+      <span class="i">i</span>
+    </button>
+    <div class="body">
+      <div class="info">
+        <p><b>Was ist das?</b> Heizkörper laufen selten mit 75/65/20 °C. Bei niedrigeren Systemtemperaturen (z. B. Brennwert oder Wärmepumpe) gibt der Heizkörper <b>weniger</b> Leistung ab. f<sub>1</sub> rechnet das um.</p>
+        <p><b>Faustregel:</b> f<sub>1</sub> = 1,00 bei Normtemperaturen. f<sub>1</sub> &gt; 1 heißt: Heizkörper bringt weniger als die Normleistung.</p>
+        <p><b>Woher?</b> Aus der Tabelle in deinem Tabellenbuch (Vorlauf / Rücklauf / Raumtemperatur). Unten kannst du einen Näherungswert berechnen lassen.</p>
+      </div>
+      <div class="row"><input id="f1" type="number" inputmode="decimal" min="0" step="any" placeholder="z. B. 1,25"><span class="unit">–</span></div>
+      <details>
+        <summary>f₁ aus Temperaturen abschätzen</summary>
+        <div class="grid3">
+          <div><label for="tv">Vorlauf °C</label><input id="tv" type="number" inputmode="decimal" placeholder="55"></div>
+          <div><label for="tr">Rücklauf °C</label><input id="tr" type="number" inputmode="decimal" placeholder="45"></div>
+          <div><label for="tl">Raum °C</label><input id="tl" type="number" inputmode="decimal" placeholder="20"></div>
+        </div>
+        <div class="helper-out" id="f1help"></div>
+        <button class="use" id="usef1" style="display:none">Wert übernehmen</button>
+        <p style="font-size:.78rem;color:var(--muted);margin:8px 0 0">Näherung: f₁ = (50 K ÷ ΔT<sub>m</sub>)<sup>1,3</sup> mit ΔT<sub>m</sub> = (Vorlauf + Rücklauf) ÷ 2 − Raum. Im Zweifel gilt dein Tabellenbuch.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- f2 -->
+  <section class="card" id="card-f2">
+    <button class="head" aria-expanded="false">
+      <span class="badge">f<sub>2</sub></span>
+      <span class="ttl"><b>Umrechnungsfaktor Einbau / Anschluss</b><span>Verkleidung, Nische, Anschlussart</span></span>
+      <span class="i">i</span>
+    </button>
+    <div class="body">
+      <div class="info">
+        <p><b>Was ist das?</b> Die Normleistung gilt für einen frei an der Wand hängenden Heizkörper. Verkleidungen, Nischen, Fensterbänke oder ein ungünstiger Anschluss <b>behindern die Wärmeabgabe</b>.</p>
+        <p><b>Faustregel:</b> f<sub>2</sub> = 1,00 bei freiem Einbau. Je schlechter die Luftzirkulation, desto größer f<sub>2</sub>.</p>
+        <p><b>Woher?</b> Tabellenbuch bzw. Herstellerangabe. Die Chips unten sind nur grobe Richtwerte zum Ausprobieren.</p>
+      </div>
+      <div class="row"><input id="f2" type="number" inputmode="decimal" min="0" step="any" placeholder="z. B. 1,05"><span class="unit">–</span></div>
+      <div class="chips" id="chips2">
+        <button class="chip" data-v="1">frei an der Wand: 1,00</button>
+        <button class="chip" data-v="1.05">Fensternische: ca. 1,05</button>
+        <button class="chip" data-v="1.1">Verkleidung: ca. 1,10</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="result" aria-live="polite">
+    <div class="lbl">Tatsächliche Wärmeleistung</div>
+    <div class="val" id="out">– W</div>
+    <div class="calc" id="calc">Fülle alle vier Felder aus.</div>
+    <div class="cmp" id="cmp" style="display:none"></div>
+    <div class="err" id="err"></div>
+  </section>
+
+  <button class="reset" id="reset">Alles zurücksetzen</button>
+  <p class="foot">Lernhilfe Lernfeld 7 · Richtwerte ersetzen nicht die Angaben aus Tabellenbuch und Herstellerunterlagen.</p>
+</main>
+
+<script>
+(function(){
+  var $ = function(id){return document.getElementById(id)};
+  var ids = ['q','z','f1','f2'];
+  function num(id){
+    var s = $(id).value.replace(',', '.').trim();
+    if(s==='') return null;
+    var v = parseFloat(s);
+    return isFinite(v) ? v : NaN;
+  }
+  function fmt(v, d){
+    return v.toLocaleString('de-DE',{minimumFractionDigits:d||0, maximumFractionDigits:d===undefined?0:d});
+  }
+  function calc(){
+    var q=num('q'), z=num('z'), f1=num('f1'), f2=num('f2');
+    var out=$('out'), c=$('calc'), cmp=$('cmp'), err=$('err');
+    err.textContent=''; cmp.style.display='none';
+    var vals=[q,z,f1,f2];
+    if(vals.some(function(v){return v===null})){
+      out.textContent='– W'; c.textContent='Fülle alle vier Felder aus.'; return;
+    }
+    if(vals.some(function(v){return isNaN(v)})){
+      out.textContent='– W'; err.textContent='Bitte nur Zahlen eingeben.'; return;
+    }
+    if(q<=0||z<=0||f1<=0||f2<=0){
+      out.textContent='– W'; err.textContent='Alle Werte müssen größer als 0 sein.'; return;
+    }
+    var Q = q*z/(f1*f2);
+    var norm = q*z;
+    out.textContent = fmt(Q,0)+' W';
+    c.textContent = 'Q̇ = ('+fmt(q,2)+' W · '+fmt(z,2)+') ÷ ('+fmt(f1,2)+' · '+fmt(f2,2)+') = '+fmt(Q,1)+' W';
+    var pct = Q/norm*100;
+    cmp.style.display='block';
+    cmp.innerHTML = 'Normleistung gesamt: <b>'+fmt(norm,0)+' W</b><br>Tatsächlich nutzbar: <b>'+fmt(pct,0)+' %</b> davon.'
+      + (pct<70 ? '<br>Das ist deutlich weniger als die Norm. Reicht das für die Heizlast des Raumes?' : '')
+      + (pct>100 ? '<br>Mehr als die Normleistung? Prüfe f₁ und f₂: Beide sollten meist ≥ 1 sein.' : '');
+  }
+  function f1help(){
+    var tv=num('tv'), tr=num('tr'), tl=num('tl');
+    var h=$('f1help'), b=$('usef1');
+    b.style.display='none';
+    if([tv,tr,tl].some(function(v){return v===null||isNaN(v)})){h.textContent='';return}
+    var dT=(tv+tr)/2-tl;
+    if(dT<=0){h.textContent='Die mittlere Heizwassertemperatur muss über der Raumtemperatur liegen.';return}
+    var f=Math.pow(50/dT,1.3);
+    h.innerHTML='ΔT<sub>m</sub> = '+fmt(dT,1)+' K → f₁ ≈ <b>'+fmt(f,2)+'</b>';
+    b.style.display='inline-block';
+    b.onclick=function(){$('f1').value=f.toFixed(2).replace('.',',');calc();$('f1').scrollIntoView({block:'center',behavior:'smooth'})};
+  }
+  ids.forEach(function(id){$(id).addEventListener('input',calc)});
+  ['tv','tr','tl'].forEach(function(id){$(id).addEventListener('input',f1help)});
+
+  // Accordion
+  var cards=document.querySelectorAll('.card');
+  function openCard(card, scroll){
+    cards.forEach(function(c){
+      var isThis = c===card;
+      c.classList.toggle('open', isThis);
+      c.classList.toggle('active', isThis);
+      c.querySelector('.head').setAttribute('aria-expanded', isThis?'true':'false');
+    });
+    if(scroll) card.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  cards.forEach(function(card){
+    card.querySelector('.head').addEventListener('click',function(){
+      if(card.classList.contains('open')){
+        card.classList.remove('open'); card.classList.remove('active');
+        this.setAttribute('aria-expanded','false');
+      } else openCard(card,false);
+    });
+  });
+  document.querySelectorAll('.tok').forEach(function(t){
+    t.addEventListener('click',function(){openCard($(t.getAttribute('data-go')),true)});
+  });
+  document.querySelectorAll('#chips2 .chip').forEach(function(ch){
+    ch.addEventListener('click',function(){
+      $('f2').value=ch.getAttribute('data-v').replace('.',',');calc();
+    });
+  });
+  $('reset').addEventListener('click',function(){
+    ids.concat(['tv','tr','tl']).forEach(function(id){$(id).value=''});
+    cards.forEach(function(c){c.classList.remove('open','active')});
+    calc(); f1help(); window.scrollTo({top:0,behavior:'smooth'});
+  });
+  calc();
+})();
+</script>
+</body>
+</html>
