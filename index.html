@@ -75,11 +75,29 @@ button.use{margin-top:8px;border:0;background:var(--info);color:#fff;border-radi
 .err{color:var(--accent);font-size:.9rem;margin-top:6px}
 .reset{display:block;margin:16px auto 0;background:none;border:1.5px solid var(--line);color:var(--text);border-radius:10px;padding:10px 18px;font:inherit;cursor:pointer;min-height:44px}
 .foot{font-size:.78rem;color:var(--muted);margin-top:16px;text-align:center}
+.hide{display:none!important}
+.pick{display:block;width:100%;text-align:left;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px;color:inherit;font:inherit;cursor:pointer;min-height:72px}
+.pick:active{border-color:var(--accent);background:var(--accent-soft)}
+.pick b{display:block;font-size:1.15rem;margin-bottom:2px}
+.pick span{color:var(--muted);font-size:.9rem}
+.back{background:none;border:0;color:var(--info);font:inherit;font-size:.9rem;cursor:pointer;padding:8px 0;min-height:44px}
+.tipbtn{margin-top:10px;background:none;border:1.5px dashed var(--info);color:var(--info);border-radius:10px;padding:8px 12px;font:inherit;font-size:.88rem;cursor:pointer;min-height:40px}
+.tipbox{margin-top:8px;background:var(--info-soft);border-radius:8px;padding:10px 12px;font-size:.92rem}
+.formula .tipbtn{margin-top:12px}
+.formula .tipbox{text-align:left}
 </style>
 </head>
 <body>
 <main>
-  <h1>Tatsächliche Wärmeleistung eines Heizkörpers</h1>
+  <section id="chooser">
+    <h1>Welcher Heizkörper?</h1>
+    <p class="sub">Wähle die Bauart. Danach führt dich die Seite durch die Berechnung der tatsächlichen Wärmeleistung.</p>
+    <button class="pick" data-mode="radiator"><b>Radiator</b><span>Gliederheizkörper · Leistung je Glied · Gliederzahl z</span></button>
+    <button class="pick" data-mode="platte"><b>Plattenheizkörper</b><span>Typ 11, 21, 22, 33 · Leistung je Meter · Länge l</span></button>
+  </section>
+  <div id="app" class="hide">
+  <button class="back" id="back">← Andere Bauart wählen</button>
+  <h1 id="h1">Tatsächliche Wärmeleistung eines Radiators</h1>
   <p class="sub">Tippe auf die orangen Felder, um zu erfahren, was die Größen bedeuten. Trage dann deine Werte ein.</p>
 
   <section class="formula" aria-label="Formel">
@@ -90,7 +108,7 @@ button.use{margin-top:8px;border:0;background:var(--info);color:#fff;border-radi
         <span class="num">
           <button class="tok" data-go="card-q">q̇<sub>N</sub></button>
           <span>·</span>
-          <button class="tok" data-go="card-z">z</button>
+          <button class="tok" id="tokz" data-go="card-z">z</button>
         </span>
         <span class="den">
           <button class="tok" data-go="card-f1">f<sub>1</sub></button>
@@ -100,6 +118,8 @@ button.use{margin-top:8px;border:0;background:var(--info);color:#fff;border-radi
       </span>
     </div>
     <div class="hint">Tippe auf ein Formelzeichen, um zum Feld zu springen.</div>
+    <button class="tipbtn" data-tip="tipF">📖 Tabellenbuch-Tipp: Formel</button>
+    <div class="tipbox hide" id="tipF">Die grundlegende Formel zur Wärmeleistung des Heizkörpers findest du im Tabellenbuch auf <b>Seite 408</b>.</div>
   </section>
 
   <!-- q -->
@@ -116,6 +136,8 @@ button.use{margin-top:8px;border:0;background:var(--info);color:#fff;border-radi
         <p><b>Achtung:</b> Bei Kompakt-Heizkörpern steht die Normleistung oft für den gesamten Heizkörper. Dann ist z = 1.</p>
       </div>
       <div class="row"><input id="q" type="number" inputmode="decimal" min="0" step="any" placeholder="z. B. 120"><span class="unit">W</span></div>
+      <button class="tipbtn" data-tip="tipq">📖 Tabellenbuch-Tipp</button>
+      <div class="tipbox hide" id="tipq"></div>
     </div>
   </section>
 
@@ -149,6 +171,8 @@ button.use{margin-top:8px;border:0;background:var(--info);color:#fff;border-radi
         <p><b>Woher?</b> Aus der Tabelle in deinem Tabellenbuch (Vorlauf / Rücklauf / Raumtemperatur). Unten kannst du einen Näherungswert berechnen lassen.</p>
       </div>
       <div class="row"><input id="f1" type="number" inputmode="decimal" min="0" step="any" placeholder="z. B. 1,25"><span class="unit">–</span></div>
+      <button class="tipbtn" data-tip="tipf1">📖 Tabellenbuch-Tipp</button>
+      <div class="tipbox hide" id="tipf1">Den Umrechnungsfaktor f<sub>1</sub> findest du im Tabellenbuch in <b>Tabelle 408.1</b>.</div>
       <details>
         <summary>f₁ aus Temperaturen abschätzen</summary>
         <div class="grid3">
@@ -177,6 +201,8 @@ button.use{margin-top:8px;border:0;background:var(--info);color:#fff;border-radi
         <p><b>Woher?</b> Tabellenbuch bzw. Herstellerangabe. Die Chips unten sind nur grobe Richtwerte zum Ausprobieren.</p>
       </div>
       <div class="row"><input id="f2" type="number" inputmode="decimal" min="0" step="any" placeholder="z. B. 1,05"><span class="unit">–</span></div>
+      <button class="tipbtn" data-tip="tipf2">📖 Tabellenbuch-Tipp</button>
+      <div class="tipbox hide" id="tipf2">Den Umrechnungsfaktor f<sub>2</sub> findest du im Tabellenbuch in <b>Tabelle 413.1</b>.</div>
       <div class="chips" id="chips2">
         <button class="chip" data-v="1">frei an der Wand: 1,00</button>
         <button class="chip" data-v="1.05">Fensternische: ca. 1,05</button>
@@ -195,12 +221,14 @@ button.use{margin-top:8px;border:0;background:var(--info);color:#fff;border-radi
 
   <button class="reset" id="reset">Alles zurücksetzen</button>
   <p class="foot">Lernhilfe Lernfeld 7 · Richtwerte ersetzen nicht die Angaben aus Tabellenbuch und Herstellerunterlagen.</p>
+</div>
 </main>
 
 <script>
 (function(){
   var $ = function(id){return document.getElementById(id)};
   var ids = ['q','z','f1','f2'];
+  var mode = 'radiator';
   function num(id){
     var s = $(id).value.replace(',', '.').trim();
     if(s==='') return null;
@@ -227,7 +255,7 @@ button.use{margin-top:8px;border:0;background:var(--info);color:#fff;border-radi
     var Q = q*z/(f1*f2);
     var norm = q*z;
     out.textContent = fmt(Q,0)+' W';
-    c.textContent = 'Q̇ = ('+fmt(q,2)+' W · '+fmt(z,2)+') ÷ ('+fmt(f1,2)+' · '+fmt(f2,2)+') = '+fmt(Q,1)+' W';
+    c.textContent = 'Q̇ = ('+fmt(q,2)+(mode==='platte'?' W/m':' W')+' · '+fmt(z,2)+(mode==='platte'?' m':'')+') ÷ ('+fmt(f1,2)+' · '+fmt(f2,2)+') = '+fmt(Q,1)+' W';
     var pct = Q/norm*100;
     cmp.style.display='block';
     cmp.innerHTML = 'Normleistung gesamt: <b>'+fmt(norm,0)+' W</b><br>Tatsächlich nutzbar: <b>'+fmt(pct,0)+' %</b> davon.'
@@ -280,6 +308,56 @@ button.use{margin-top:8px;border:0;background:var(--info);color:#fff;border-radi
     ids.concat(['tv','tr','tl']).forEach(function(id){$(id).value=''});
     cards.forEach(function(c){c.classList.remove('open','active')});
     calc(); f1help(); window.scrollTo({top:0,behavior:'smooth'});
+  });
+  var MODES = {
+    radiator:{
+      h1:'Tatsächliche Wärmeleistung eines Radiators',
+      qT:'Norm-Wärmeleistung je Glied', qS:'Herstellerangabe in Watt pro Glied', qU:'W', qPh:'z. B. 120', qTip:'Die Normleistung je Glied für Radiatoren steht im Tabellenbuch in <b>Tabelle 410.1</b>.',
+      qInfo:'<p><b>Was ist das?</b> Die Leistung, die ein einzelnes Glied unter <b>Normbedingungen</b> abgibt: Vorlauf 75 °C, Rücklauf 65 °C, Raum 20 °C (Übertemperatur 50 K).</p><p><b>Woher?</b> Typenschild, Herstellerkatalog, Datenblatt oder Tabellenbuch. Achte auf Bauhöhe und Säulenzahl (z. B. 2-säulig, 3-säulig).</p>',
+      zB:'z', zT:'Anzahl der Glieder', zS:'Wie viele Glieder hat der Radiator?', zU:'Stk.', zPh:'z. B. 10', zStep:'1',
+      zInfo:'<p><b>Was ist das?</b> Die Anzahl der Glieder (Rippen) des Radiators. Die Gesamt-Normleistung ergibt sich aus Leistung je Glied mal Gliederzahl.</p><p><b>Praxis:</b> Glieder einfach zählen.</p>'
+    },
+    platte:{
+      h1:'Tatsächliche Wärmeleistung eines Plattenheizkörpers',
+      qT:'Norm-Wärmeleistung je Meter', qS:'Herstellerangabe in Watt pro Meter Baulänge', qU:'W/m', qPh:'z. B. 1185', qTip:'Die Normleistung je Meter für Plattenheizkörper steht im Tabellenbuch in <b>Tabelle 409.1</b> bzw. <b>409.2</b>.',
+      qInfo:'<p><b>Was ist das?</b> Die Leistung, die ein Meter Baulänge des Plattenheizkörpers unter <b>Normbedingungen</b> abgibt: Vorlauf 75 °C, Rücklauf 65 °C, Raum 20 °C (Übertemperatur 50 K).</p><p><b>Woher?</b> Herstellerkatalog oder Tabellenbuch. Sie hängt von <b>Typ</b> (11, 21, 22, 33) und <b>Bauhöhe</b> ab, z. B. „Typ 22, Bauhöhe 600“.</p><p><b>Tipp:</b> Kataloge nennen oft die Leistung für eine bestimmte Länge. Bei 1000 mm Länge ist der Katalogwert direkt der Wert in W/m.</p>',
+      zB:'l', zT:'Länge des Heizkörpers', zS:'Baulänge in Metern', zU:'m', zPh:'z. B. 1,0', zStep:'any',
+      zInfo:'<p><b>Was ist das?</b> Die Baulänge des Plattenheizkörpers in <b>Metern</b>. Die Gesamt-Normleistung ergibt sich aus Leistung je Meter mal Länge.</p><p><b>Umrechnen:</b> 1000 mm = 1,0 m · 800 mm = 0,8 m · 600 mm = 0,6 m. Die Länge steht in der Typbezeichnung, z. B. „Typ 22 – 600 – 1000“ (Typ – Höhe – Länge in mm).</p>'
+    }
+  };
+  function setMode(m){
+    mode = m;
+    var d = MODES[m];
+    $('h1').textContent = d.h1;
+    $('tokz').textContent = d.zB;
+    document.querySelector('#card-q .ttl b').textContent = d.qT;
+    document.querySelector('#card-q .ttl span').textContent = d.qS;
+    document.querySelector('#card-q .unit').textContent = d.qU;
+    document.querySelector('#card-q .info').innerHTML = d.qInfo;
+    $('q').placeholder = d.qPh;
+    $('tipq').innerHTML = d.qTip;
+    document.querySelectorAll('.tipbox').forEach(function(t){t.classList.add('hide')});
+    document.querySelector('#card-z .badge').textContent = d.zB;
+    document.querySelector('#card-z .ttl b').textContent = d.zT;
+    document.querySelector('#card-z .ttl span').textContent = d.zS;
+    document.querySelector('#card-z .unit').textContent = d.zU;
+    document.querySelector('#card-z .info').innerHTML = d.zInfo;
+    $('z').placeholder = d.zPh;
+    $('z').step = d.zStep;
+    $('q').value=''; $('z').value='';
+    cards.forEach(function(c){c.classList.remove('open','active')});
+    $('chooser').classList.add('hide');
+    $('app').classList.remove('hide');
+    calc(); window.scrollTo(0,0);
+  }
+  document.querySelectorAll('.pick').forEach(function(b){
+    b.addEventListener('click',function(){setMode(b.getAttribute('data-mode'))});
+  });
+  document.querySelectorAll('.tipbtn').forEach(function(b){
+    b.addEventListener('click',function(){$(b.getAttribute('data-tip')).classList.toggle('hide')});
+  });
+  $('back').addEventListener('click',function(){
+    $('app').classList.add('hide'); $('chooser').classList.remove('hide'); window.scrollTo(0,0);
   });
   calc();
 })();
